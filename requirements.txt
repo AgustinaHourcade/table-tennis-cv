@@ -1,0 +1,12 @@
+# Core packages for YOLO, Pose Estimation and Segmentation
+ultralytics
+
+# Computer Vision & Video Processing
+opencv-python
+numpy
+
+# Experimentation & Training Notebooks
+jupyter
+ipykernel
+matplotlib
+pandas
