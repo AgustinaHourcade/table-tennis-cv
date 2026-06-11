@@ -1,4 +1,4 @@
-# Projecto integrador YOLO: TT > 2026-06-01 4:23pm
+# Projecto integrador YOLO: TT > 2026-06-10 9:28pm
 https://universe.roboflow.com/ignacio-s-workspace/projecto-integrador-yolo-tt
 
 Provided by a Roboflow user
