@@ -24,6 +24,12 @@ jobs:
         run: |
           rm -rf .git
           git init
+          echo "dataset_obb/" >> .gitignore
+          echo "runs/" >> .gitignore
+          echo "*.ipynb" >> .gitignore
+          echo "*.jpg" >> .gitignore
+          echo "*.png" >> .gitignore
+          echo "*.pdf" >> .gitignore
           git lfs install
           git lfs track "*.mp4" "*.pt"
           git add .
