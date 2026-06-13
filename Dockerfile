@@ -1,6 +1,7 @@
 FROM python:3.9-slim
 
-# Crear un usuario no-root (requerido por la seguridad de Hugging Face Spaces)
+# Instalar dependencias del sistema operativo necesarias para OpenCV
+RUN apt-get update && apt-get install -y libgl1 libglib2.0-0 libxcb1
 RUN useradd -m -u 1000 user
 USER user
 ENV PATH="/home/user/.local/bin:$PATH"
