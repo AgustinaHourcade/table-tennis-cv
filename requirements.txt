@@ -2,11 +2,19 @@
 ultralytics
 
 # Computer Vision & Video Processing
-opencv-python
+opencv-python-headless
 numpy
+
+# Force CPU-only PyTorch to save massive space on Render
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
 
 # Experimentation & Training Notebooks
 jupyter
 ipykernel
 matplotlib
 pandas
+fastapi
+uvicorn
+python-multipart
