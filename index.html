@@ -1318,10 +1318,11 @@
   </main>
 
 <script>
-// Detectamos si estamos en producción (GitHub Pages) para apuntar al backend de Render
+// Detectamos si estamos en producción (GitHub Pages) para apuntar al backend de Hugging Face
 let API_BASE_URL = '';
 if (window.location.hostname.includes('github.io')) {
-  API_BASE_URL = 'https://table-tennis-cv.onrender.com';
+  // TODO: Reemplazar esto con el "Direct URL" de tu Space en Hugging Face
+  API_BASE_URL = 'https://TU-USUARIO-TU-ESPACIO.hf.space';
 } else if (window.location.port !== '8555' && window.location.hostname === 'localhost' || window.location.protocol === 'file:') {
   // Si estás usando Live Server (puerto 8000) o abriendo el archivo localmente
   API_BASE_URL = 'http://localhost:8555';
