@@ -83,11 +83,8 @@ def process_video(file: UploadFile = File(...)):
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    # Limit processing to 5 seconds to guarantee it finishes well under 60 seconds
-    limit_frames = min(int(5 * fps), total_frames)
-    
-    # Process ~15 frames per second to keep visual tracking smooth
-    frame_skip = max(1, int(fps / 15))
+    # Limit processing to 3 seconds to avoid Hugging Face timeout at 30 FPS
+    limit_frames = min(int(3 * fps), total_frames)
     
     json_data = {
         "video_info": {
@@ -106,17 +103,10 @@ def process_video(file: UploadFile = File(...)):
     inference_time_sum = 0
     frame_idx = 0
     
-    last_frame_data = {"detections": [], "poses": [], "segmentations": []}
-    
     while cap.isOpened() and frame_idx < limit_frames:
         ret, frame = cap.read()
         if not ret:
             break
-            
-        if frame_idx % frame_skip != 0:
-            json_data["frames"].append(last_frame_data)
-            frame_idx += 1
-            continue
             
         t0 = time.time()
         frame_data = {"detections": [], "poses": [], "segmentations": []}
@@ -170,7 +160,6 @@ def process_video(file: UploadFile = File(...)):
                     conf_sum += confidence
                     conf_count += 1
                     
-        last_frame_data = frame_data
         json_data["frames"].append(frame_data)
         
         t1 = time.time()
