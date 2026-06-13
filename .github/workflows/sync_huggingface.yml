@@ -21,4 +21,13 @@ jobs:
       - name: Empujar a Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: git push https://agustinah:$HF_TOKEN@huggingface.co/spaces/agustinah/table-tennis-cv HEAD:main -f
+        run: |
+          rm -rf .git
+          git init
+          git lfs install
+          git lfs track "*.mp4" "*.pt"
+          git add .
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git commit -m "Deploy to Hugging Face"
+          git push https://agustinah:$HF_TOKEN@huggingface.co/spaces/agustinah/table-tennis-cv HEAD:main -f
