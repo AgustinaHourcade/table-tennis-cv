@@ -1321,8 +1321,7 @@
 // Detectamos si estamos en producción (GitHub Pages) para apuntar al backend de Render
 let API_BASE_URL = '';
 if (window.location.hostname.includes('github.io')) {
-  // TODO: Reemplazar esto con la URL que te asigne Render (ej. 'https://mi-backend.onrender.com')
-  API_BASE_URL = 'https://TU_APP_RENDER.onrender.com';
+  API_BASE_URL = 'https://table-tennis-cv.onrender.com';
 } else if (window.location.port !== '8555' && window.location.hostname === 'localhost' || window.location.protocol === 'file:') {
   // Si estás usando Live Server (puerto 8000) o abriendo el archivo localmente
   API_BASE_URL = 'http://localhost:8555';
