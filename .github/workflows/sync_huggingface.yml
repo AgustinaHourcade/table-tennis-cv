@@ -1,0 +1,24 @@
+name: Sincronizar con Hugging Face Spaces
+
+on:
+  push:
+    branches:
+      - main
+      - web-deploy
+  # Permite correr esta acción manualmente desde GitHub
+  workflow_dispatch:
+
+jobs:
+  sync-to-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          lfs: true
+          
+      - name: Empujar a Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: git push https://agustinah:$HF_TOKEN@huggingface.co/spaces/agustinah/table-tennis-cv HEAD:main -f
