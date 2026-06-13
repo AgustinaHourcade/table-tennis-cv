@@ -83,8 +83,8 @@ def process_video(file: UploadFile = File(...)):
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    # Limit processing to 3 seconds to avoid Hugging Face timeout at 30 FPS
-    limit_frames = min(int(3 * fps), total_frames)
+    # Limit processing to 15 seconds to keep it fast for the demo
+    limit_frames = min(int(15 * fps), total_frames)
     
     json_data = {
         "video_info": {
