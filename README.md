@@ -1,3 +1,12 @@
+---
+title: Table Tennis CV
+emoji: 🏓
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # Proyecto Integrador: Detección, Segmentación y Estimación de Pose utilizando YOLO
 
 Este repositorio contiene el desarrollo del **Proyecto Integrador** para la materia **Redes Neuronales**. El objetivo del proyecto es diseñar e implementar una solución integral de visión artificial que combine detección de objetos con clases personalizadas, segmentación de instancias y estimación de pose humana en tiempo real sobre videos de **Tenis de Mesa (Table Tennis)**.
