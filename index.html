@@ -1137,13 +1137,24 @@
         flex-direction: column;
         height: auto;
       }
+      .demo-cards-panel {
+        height: auto;
+      }
       .demo-cards-grid {
+        display: grid;
         grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        height: auto;
+      }
+      .demo-card {
+        height: auto;
+      }
+      .demo-card-thumb {
+        flex: none;
+        aspect-ratio: 16 / 9;
       }
       .metrics-panel {
-        max-height: none;
         height: auto;
-        min-height: 0;
       }
       .player-area {
         overflow: visible;
