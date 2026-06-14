@@ -165,6 +165,10 @@ def process_video(file: UploadFile = File(...)):
         t1 = time.time()
         inference_time_sum += (t1 - t0) * 1000
         frame_idx += 1
+        
+        # Log progress every 10 frames or on the first frame
+        if frame_idx == 1 or frame_idx % 10 == 0 or frame_idx == limit_frames:
+            print(f"Procesando frame {frame_idx}/{limit_frames}...")
             
     cap.release()
     
