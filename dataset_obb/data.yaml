@@ -1,8 +1,0 @@
-names:
-  0: TT Net
-  1: TT Racket
-  2: TT Table
-path: C:\Users\Ignac\Universidad\Materias\Redes Neuronales\TPI\dataset_obb
-test: test/images
-train: train/images
-val: valid/images

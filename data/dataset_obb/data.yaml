@@ -1,0 +1,8 @@
+names:
+  0: TT Net
+  1: TT Racket
+  2: TT Table
+path: c:\Users\Agustina\Documents\UP\Redes-neuronales\TPI-Rede-Neuronales\data\dataset_obb
+test: test/images
+train: train/images
+val: valid/images

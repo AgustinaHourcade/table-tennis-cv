@@ -1,149 +1,131 @@
----
-title: Table Tennis CV
-emoji: 🏓
-colorFrom: blue
-colorTo: green
-sdk: docker
-pinned: false
----
+<div align="center">
+  <h1>Table Tennis CV — Visión Computacional</h1>
+  <p><em>Detección de objetos personalizados, segmentación de instancias y estimación de pose en tiempo real utilizando YOLO.</em></p>
 
-# Proyecto Integrador: Detección, Segmentación y Estimación de Pose utilizando YOLO
+  <!-- TODO: Reemplazar el src con la ruta de tu imagen cuando la adjuntes -->
+  <img src="https://via.placeholder.com/1000x500?text=Dashboard+Preview+-+Inserta+tu+imagen+aqui" alt="Dashboard Preview" width="100%">
 
-Este repositorio contiene el desarrollo del **Proyecto Integrador** para la materia **Redes Neuronales**. El objetivo del proyecto es diseñar e implementar una solución integral de visión artificial que combine detección de objetos con clases personalizadas, segmentación de instancias y estimación de pose humana en tiempo real sobre videos de **Tenis de Mesa (Table Tennis)**.
+  <br><br>
 
----
-
-## 🏓 Clases Personalizadas (Dataset en Roboflow)
-El modelo ha sido entrenado para detectar tres clases específicas que no forman parte del dataset original de COCO:
-1. **`TT Racket`**: Paleta de tenis de mesa (ping pong).
-2. **`TT Table`**: Mesa de juego de tenis de mesa.
-3. **`TT Net`**: Red de la mesa de tenis de mesa.
-
-El etiquetado y curación del dataset se realiza utilizando la plataforma **Roboflow**, garantizando un mínimo de 50 imágenes por clase y exportando el dataset en formato compatible con YOLO.
+  <p>
+    <a href="https://agustinahourcade.github.io/table-tennis-cv/"><strong>Ver Dashboard en Vivo</strong></a>
+  </p>
+</div>
 
 ---
 
-## 🎯 Objetivos del Proyecto
+## Visión General del Proyecto
 
-El sistema procesa videos (de hasta 2 minutos de duración) integrando simultáneamente tres tareas de visión artificial con modelos de la familia YOLO:
+Este repositorio contiene el desarrollo del **Proyecto Integrador** para la cátedra de **Redes Neuronales**. El objetivo central es proporcionar una solución integral de visión artificial capaz de analizar partidas de tenis de mesa (Ping Pong) desde secuencias de video.
 
-1. **Detección de Clases Personalizadas**:
-   - Identificación de `TT Racket`, `TT Table` y `TT Net`.
-   - Dibujado de Bounding Boxes con el nombre de la clase y el nivel de confianza.
-2. **Segmentación**:
-   - Segmentación de objetos de la base de datos de COCO que superen un umbral de confianza definido.
-   - **Exclusiones**: Se excluyen de la segmentación las personas y las clases personalizadas entrenadas (`TT Racket`, `TT Table`, `TT Net`).
-3. **Estimación de Pose (Pose Estimation)**:
-   - Detección de personas en el video.
-   - Dibujado de Keypoints (puntos clave), esqueleto corporal y seguimiento visual de la pose de los jugadores.
-4. **Reporte en Tiempo Real**:
-   - Superposición de un panel informativo en el video que muestra dinámicamente la cantidad de objetos detectados de cada clase personalizada (por ejemplo: `TT Racket: 2`, `TT Table: 1`, `TT Net: 1`).
+La arquitectura implementa un pipeline concurrente basado en la familia de modelos **YOLO** para resolver tres problemas fundamentales de Computer Vision simultáneamente:
+1. **Object Detection**: Detección de elementos específicos del entorno de juego.
+2. **Instance Segmentation**: Segmentación a nivel de píxel de objetos secundarios.
+3. **Pose Estimation**: Seguimiento articular y análisis biomecánico de los jugadores.
 
 ---
 
-## 📁 Estructura del Proyecto
+## Características Principales
 
-El repositorio está organizado de la siguiente manera:
+- **Detección de Clases Personalizadas (Custom Object Detection)**: Modelo afinado (*Fine-Tuned*) vía Transfer Learning para detectar elementos críticos no presentes en datasets estándar (COCO):
+  - `TT Racket`: Paletas de tenis de mesa.
+  - `TT Table`: Mesa de juego.
+  - `TT Net`: Red de la mesa.
+- **Estimación de Pose (Pose Estimation)**: Extracción de *keypoints* esqueléticos de los jugadores en tiempo real, permitiendo análisis de posturas, desplazamientos corporales y mecánicas de juego.
+- **Segmentación Inteligente (Instance Segmentation)**: Máscaras de segmentación para objetos contextuales, aplicando filtros de exclusión heurísticos en tiempo de inferencia para evitar la superposición de máscaras con clases personalizadas y siluetas de jugadores.
+- **Dashboard Analítico (Frontend UI)**: Interfaz de usuario construida para visualizar las métricas del modelo, inferencias y reportes en vivo de forma accesible y profesional.
+
+---
+
+## Arquitectura de Modelos & Dataset
+
+### Dataset Personalizado
+La recolección, curación y preprocesamiento de las imágenes se gestionó utilizando la plataforma **Roboflow**. Se garantizó la robustez visual aplicando técnicas de **Data Augmentation** para lidiar con variaciones de iluminación, desenfoque de movimiento (*motion blur*) natural del deporte y diferentes perspectivas de cámara.
+- **Formato de exportación**: YOLO format.
+- **Balance**: Un mínimo estricto de 50 imágenes de alta calidad por clase base.
+
+### Pipeline de Inferencia
+El núcleo de procesamiento se nutre de las implementaciones optimizadas de la librería **Ultralytics** (YOLO26):
+- **Backbone & Head**: Arquitectura ajustada para la inferencia en tiempo real, priorizando el compromiso entre el *Mean Average Precision* (mAP) y la latencia computacional (FPS).
+- **Lógica de Integración**: Funciones customizadas para unificar los outputs de las distintas redes (cajas delimitadoras, máscaras de segmentación y tensores de coordenadas articulares) en un único frame renderizado, superponiendo KPIs en tiempo real.
+
+---
+
+## Estructura del Repositorio
+
 
 ```text
-TPI/
-├── .gitignore                  # Exclusiones de archivos para Git
-├── README.md                   # Documentación principal (este archivo)
-├── requirements.txt            # Dependencias del proyecto
-├── data.yaml                   # Configuración del dataset exportado de Roboflow
-├── Proyecto Integrador...pdf   # Consigna oficial de la materia
-│
-├── notebooks/                  # Notebooks para entrenamiento y pruebas
-│   └── entrenamiento.ipynb     # Notebook de Google Colab / Jupyter para Transfer Learning
-│
-├── src/                        # Código fuente del sistema de inferencia
-│   ├── __init__.py
-│   ├── main.py                 # Pipeline principal de procesamiento de video
-│   └── utils.py                # Funciones de utilidad para dibujar overlays, conteo, etc.
-│
-├── weights/                    # Pesos de los modelos (Excluido de Git)
-│   └── best.pt                 # Pesos resultantes del entrenamiento personalizado
-│
-└── output/                     # Videos procesados finales (Excluido de Git)
+TPI-Rede-Neuronales/
+├── data/                       # Datasets, configuraciones YAML (data.yaml) y metadatos
+├── deploy/                     # Scripts y configuración para despliegue
+├── frontend/                   # Código fuente del Dashboard UI interactivo
+├── models/                     # Definiciones de arquitecturas y experimentación
+├── notebooks/                  # Jupyter Notebooks (EDA, Transfer Learning y pruebas)
+├── runs/                       # Salidas de entrenamiento (curvas de pérdida, weights, logs)
+├── src/                        # Código base del sistema de visión artificial
+│   ├── main.py                 # Pipeline de procesamiento de video e inferencia
+│   └── utils.py                # Utils de rendering (bboxes, esqueletos, contadores)
+├── .gitignore                  # Reglas de control de versiones
+├── requirements.txt            # Dependencias del entorno de Python
+└── README.md                   # Documentación técnica (Este archivo)
 ```
 
 ---
 
-## 🛠️ Instalación y Requisitos
+## Guía de Instalación y Uso
 
-### Requisitos Previos
-- Python 3.9 o superior.
-- Git.
-- Entorno de ejecución con soporte para GPU (opcional pero recomendado para el entrenamiento y una inferencia más fluida).
+### 1. Requisitos Previos
+- **Python 3.9+**
+- **Git**
+- (Opcional pero altamente recomendado) Entorno local con aceleración por hardware (NVIDIA GPU con CUDA/cuDNN configurado).
 
-### Pasos para Configurar Localmente
-
-1. **Clonar el repositorio**:
-   ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd TPI
-   ```
-
-2. **Crear y activar un entorno virtual**:
-   - **En Windows (PowerShell)**:
-     ```powershell
-     python -m venv .venv
-     .venv\Scripts\Activate.ps1
-     ```
-   - **En Linux/macOS**:
-     ```bash
-     python3 -m venv .venv
-     source .venv/bin/activate
-     ```
-
-3. **Instalar dependencias**:
-   ```bash
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-
-*(Nota: Si el archivo `requirements.txt` no está creado aún, las dependencias principales requeridas son `ultralytics`, `opencv-python`, `numpy` y `jupyter`).*
-
----
-
-## 🚀 Entrenamiento y Uso
-
-### 1. Entrenamiento del Modelo
-El entrenamiento se realiza por medio de **Transfer Learning** a partir de un modelo preentrenado de YOLO.
-- El dataset etiquetado en Roboflow debe descargarse en la carpeta raíz o configurarse en `data.yaml`.
-- Abre el notebook [entrenamiento.ipynb](file:///c:/Users/Ignac/Universidad/Materias/Redes%20Neuronales/TPI/notebooks/entrenamiento.ipynb) dentro de la carpeta `notebooks/` y sigue los pasos para entrenar el modelo.
-- Al finalizar, guarda el archivo de pesos obtenido (`best.pt`) dentro del directorio `weights/`.
-
-### 2. Procesamiento de Video (Inferencia)
-Para correr el pipeline que procesa el video original y genera el video resultante con la segmentación, pose y la detección con el reporte en tiempo real:
+### 2. Configuración del Entorno Local
 
 ```bash
-python src/main.py --input path/to/video.mp4 --output output/video_procesado.mp4
+# Clonar el repositorio
+git clone <URL_DEL_REPOSITORIO>
+cd TPI-Rede-Neuronales
+
+# Crear entorno virtual aislado (Recomendado)
+python -m venv .venv
+
+# Activar el entorno virtual
+# En Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+# En Linux/macOS:
+source .venv/bin/activate
+
+# Instalar dependencias del core
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
-#### Argumentos de `src/main.py`:
-- `--input`: Ruta al video original o link de video público (máximo 2 minutos).
-- `--output`: Ruta donde se guardará el video resultante.
-- `--conf`: Umbral de confianza mínimo para detección y segmentación (por defecto `0.5`).
+### 3. Flujo de Entrenamiento (Transfer Learning)
+Para re-entrenar el modelo con nuevos datos o experimentar con hiperparámetros:
+1. Asegura que el dataset configurado en Roboflow esté mapeado correctamente.
+2. Abre y ejecuta los entornos de entrenamiento alojados en `notebooks/` (ej. `entrenamiento.ipynb`). Estos scripts están preparados para ejecutarse en entornos cloud como **Google Colab** o de forma local si dispones de GPU.
+3. Los artefactos resultantes y los pesos (`best.pt`) se auto-guardarán en el directorio `runs/` o `weights/`.
+
+### 4. Ejecución del Procesamiento de Video
+Para correr el pipeline de inferencia sobre un video de entrada (recomendable máximo 2 minutos para pruebas):
+
+```bash
+python src/main.py --input path/to/video.mp4 --output output/video_procesado.mp4 --conf 0.5
+```
+
+**Argumentos disponibles CLI:**
+- `--input`: Ruta local al archivo de video original.
+- `--output`: Ruta de destino para exportar el resultado renderizado.
+- `--conf`: Umbral de confianza mínimo (`Confidence Threshold`) para filtrar las detecciones.
 
 ---
 
-## 📊 Documentación de Resultados y Métricas
-*(Esta sección se completará una vez finalizado el entrenamiento del modelo)*
+## Evaluación y Métricas
 
-- **Arquitectura Utilizada**: YOLOv8 / YOLOv11 (según versión seleccionada).
-- **Cantidad de Épocas**: `TBD`
-- **Batch Size**: `TBD`
-- **Tamaño de Imagen (Image Size)**: `TBD`
-- **Métricas Obtenidas**:
-  - Precision (P): `TBD`
-  - Recall (R): `TBD`
-  - mAP50: `TBD`
-  - mAP50-95: `TBD`
+- **Arquitectura Base**: Ultralytics YOLO26
+- **Métricas de Performance del Modelo**:
+  - **mAP50**: `[Por actualizar]`
+  - **mAP50-95**: `[Por actualizar]`
+  - **Precision (P)**: `[Por actualizar]`
+  - **Recall (R)**: `[Por actualizar]`
 
----
-
-## 👥 Integrantes del Grupo
-- [Nombre Integrante 1] - [Email/Legajo]
-- [Nombre Integrante 2] - [Email/Legajo]
-- [Nombre Integrante 3] - [Email/Legajo]

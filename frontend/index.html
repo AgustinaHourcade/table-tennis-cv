@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Dashboard universitario para modelo YOLO personalizado con detección de objetos, estimación de pose y segmentación de instancias en tiempo real.">
+  <title>Tenis de mesa — Visión computacional</title>
+  <link rel="icon" href="favicon-tt.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Server Wakeup Overlay -->
+  <div id="server-wakeup-overlay">
+    <div class="wakeup-spinner"></div>
+    <div class="wakeup-text">Despertando las Redes Neuronales...</div>
+    <div class="wakeup-subtext">El servidor gratuito de Render está iniciando. Esto puede tardar unos 50 segundos la primera vez. Por favor, no cierres la ventana.</div>
+  </div>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="header">
+    <div class="header-left">
+      <div class="header-logo">
+        Tenis de mesa — Visión computacional
+      </div>
+      <span class="model-tag">YOLO 26</span>
+    </div>
+    <div class="header-right">
+      <div class="header-badges">
+        <div class="header-badge badge-det"><span class="dot"></span>Detección</div>
+        <div class="header-badge badge-pose"><span class="dot"></span>Pose</div>
+        <div class="header-badge badge-seg"><span class="dot"></span>Segmentación</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+
+    <!-- ═══ WORKSPACE: Demos + Player + Metrics ═══ -->
+    <section class="workspace">
+
+      <!-- ── Demo Cards Panel (left column) ── -->
+      <div class="demo-cards-panel">
+        <div class="section-label">Demos disponibles</div>
+        <div class="demo-cards-grid" id="demo-cards-grid">
+          <!-- Cards injected by JS -->
+        </div>
+      </div>
+
+      <!-- ── Player Area (center) ── -->
+      <div class="player-area">
+        <div class="player-wrapper" id="player-wrapper">
+          <video id="video-src" muted playsinline crossorigin="anonymous"></video>
+          <canvas id="overlay-canvas"></canvas>
+
+          <!-- Idle state (visible when no video loaded) -->
+          <div class="player-idle-state" id="player-idle-state">
+            <svg class="idle-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/>
+            </svg>
+            <div class="idle-text">Seleccioná un demo o subí tu propio video para comenzar el análisis</div>
+            <button class="idle-upload-link" id="idle-upload-link">↑ Subir video propio</button>
+          </div>
+
+          <!-- Loading overlay -->
+          <div class="loading-overlay" id="loading-overlay">
+            <div id="real-progress-container" style="width: 80%; max-width: 400px; display: flex; flex-direction: column; gap: 12px; align-items: center;">
+              <div id="real-progress-text" style="font-family: 'DM Mono', monospace; font-size: 13px; color: var(--accent-global);">Iniciando procesamiento...</div>
+              <div style="width: 100%; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden;">
+                <div id="real-progress-bar" style="width: 0%; height: 100%; background: var(--accent-global); transition: width 0.3s ease;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="player-controls" id="player-controls">
+          <button class="ctrl-btn" id="btn-prev-frame" aria-label="Retroceder 5 segundos" disabled>
+            <svg viewBox="0 0 24 24"><path d="M19 20L9 12l10-8v16zM5 19V5"/></svg>
+          </button>
+          <button class="ctrl-btn play-btn" id="btn-play" aria-label="Reproducir / Pausar" disabled>
+            <svg viewBox="0 0 24 24" id="play-icon"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+          <button class="ctrl-btn" id="btn-next-frame" aria-label="Adelantar 5 segundos" disabled>
+            <svg viewBox="0 0 24 24"><path d="M5 4l10 8-10 8V4zM19 5v14"/></svg>
+          </button>
+          <span class="ctrl-time disabled" id="ctrl-time">—:— / —:—</span>
+          <div class="ctrl-progress disabled" id="ctrl-progress" aria-label="Progreso del video">
+            <div class="ctrl-progress-fill" id="ctrl-progress-fill"></div>
+          </div>
+          <div class="ctrl-volume-group">
+            <button class="ctrl-btn" id="btn-mute" aria-label="Silenciar" disabled>
+              <svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
+            </button>
+            <input type="range" class="ctrl-volume-slider" id="ctrl-volume" min="0" max="1" step="0.05" value="0" aria-label="Volumen" disabled>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="timeline-section" id="timeline-section">
+          <div class="timeline-label">Timeline de detecciones</div>
+          <div class="timeline-container" id="timeline-container">
+            <!-- Rows rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Metrics Panel (right column) ── -->
+      <div class="metrics-panel" id="metrics-panel">
+        <div class="panel-title">Capas y métricas</div>
+
+        <!-- Toggles -->
+        <div class="toggles-group">
+          <div class="toggle-row">
+            <div class="toggle-label">
+              <span class="color-dot" style="background:var(--accent-det)"></span>
+              Detección
+            </div>
+            <label class="toggle-switch" aria-label="Toggle detección">
+              <input type="checkbox" checked id="toggle-detection" data-layer="detection">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">
+              <span class="color-dot" style="background:var(--accent-pose)"></span>
+              Estimación de pose
+            </div>
+            <label class="toggle-switch" aria-label="Toggle pose">
+              <input type="checkbox" checked id="toggle-pose" data-layer="pose">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-label">
+              <span class="color-dot" style="background:var(--accent-seg)"></span>
+              Segmentación
+            </div>
+            <label class="toggle-switch" aria-label="Toggle segmentación">
+              <input type="checkbox" id="toggle-segmentation" data-layer="segmentation">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Confidence Slider -->
+        <div class="confidence-section">
+          <div class="confidence-header">
+            <span class="confidence-label">Umbral de confianza</span>
+            <span class="confidence-value" id="confidence-display">0.45</span>
+          </div>
+          <input type="range" class="confidence-slider" id="confidence-slider"
+                 min="0" max="1" step="0.01" value="0.45"
+                 style="--val:45%"
+                 aria-label="Umbral de confianza">
+          <div class="confidence-hints">
+            <span>Más detecciones</span>
+            <span>Mayor precisión</span>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="panel-title">Métricas del video</div>
+        <div class="metrics-empty-banner" id="metrics-empty-banner">Sin video activo — cargá un video para ver métricas</div>
+        <div class="metrics-grid" id="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Total detecciones</span>
+            <span class="metric-value empty-value" id="metric-total-det">—</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Personas trackeadas</span>
+            <span class="metric-value empty-value" id="metric-persons">—</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Confianza promedio</span>
+            <span class="metric-value empty-value" id="metric-conf-avg">—</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Inferencia / fps</span>
+            <span class="metric-value empty-value" id="metric-fps">—</span>
+            <span class="metric-tooltip" id="metric-fps-tooltip"></span>
+          </div>
+        </div>
+
+        <!-- Bar Chart -->
+        <div class="panel-title">Clases detectadas</div>
+        <div class="bar-chart-section" id="bar-chart"></div>
+
+        <!-- Summary -->
+        <div class="summary-box" id="summary-box">
+          <span class="arrow">→</span> Seleccioná un demo para ver métricas.
+        </div>
+
+        <!-- Export -->
+        <div style="display: flex; gap: 8px;">
+          <button class="export-btn" id="export-btn" aria-label="Exportar frame" disabled style="flex: 1; padding: 10px 4px; gap: 6px;">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            <span style="font-size: 11px;">Descargar Frame</span>
+          </button>
+          <button class="export-btn" id="export-vid-btn" aria-label="Exportar video" disabled style="flex: 1; padding: 10px 4px; gap: 6px;">
+            <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+            <span style="font-size: 11px;">Descargar Video</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ DROPZONE ═══ -->
+    <section class="dropzone-section" id="dropzone-section">
+      <div class="section-label">Subir video</div>
+      <div class="dropzone" id="dropzone">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <div class="dropzone-text">Arrastrá o <span>seleccioná un archivo</span></div>
+        <div class="dropzone-error" id="dropzone-error"></div>
+        <input type="file" accept="video/mp4,video/*" id="file-input" aria-label="Subir video">
+      </div>
+    </section>
+  </main>
+
+<script src="app.js"></script>
+
+</body>
+</html>
