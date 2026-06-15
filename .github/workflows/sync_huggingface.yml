@@ -25,6 +25,8 @@ jobs:
           rm -rf .git
           git init
           echo "dataset_obb/" >> .gitignore
+          echo "data/dataset_obb/" >> .gitignore
+          echo "*.cache" >> .gitignore
           echo "runs/" >> .gitignore
           echo "*.ipynb" >> .gitignore
           echo "*.jpg" >> .gitignore
