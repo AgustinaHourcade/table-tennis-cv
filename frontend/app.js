@@ -325,7 +325,7 @@ function roundRect(ctx, x, y, w, h, r) {
    Data Loading
    ═══════════════════════════════════ */
 async function loadVideoData(videoKey) {
-  const jsonPath = API_BASE_URL + '/videos/processed/' + videoKey + '_data.json';
+  const jsonPath = API_BASE_URL + '/videos/processed/processed_' + videoKey + '_data.json';
   try {
     const res = await fetch(jsonPath);
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -1018,41 +1018,14 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function checkServerHealth() {
-  const overlay = document.getElementById('server-wakeup-overlay');
-  
-  // Bucle infinito hasta que el servidor responda
-  while (true) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      const response = await fetch(API_BASE_URL + '/api/health', { signal: controller.signal });
-      clearTimeout(timeoutId);
-      
-      if (response.ok) {
-        // Servidor despierto y listo
-        overlay.classList.add('hidden');
-        break;
-      }
-    } catch (err) {
-      console.log('Esperando a que Render despierte el servidor...');
-    }
-    // Esperar 3 segundos antes del próximo "ping"
-    await sleep(3000);
-  }
-}
-
 /* ═══════════════════════════════════
    Initialization
    ═══════════════════════════════════ */
-async function init() {
+function init() {
   buildDemoCards();
   resizeCanvas();
   setControlsEnabled(false); // Start with controls disabled
   requestAnimationFrame(renderLoop);
-  
-  await checkServerHealth();
 }
 
 document.addEventListener('DOMContentLoaded', init);
