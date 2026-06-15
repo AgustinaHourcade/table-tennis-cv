@@ -34,6 +34,7 @@ jobs:
           echo "*.pdf" >> .gitignore
           git lfs install
           git lfs track "*.mp4" "*.pt" "*.json"
+          cp deploy/Dockerfile Dockerfile
           git add .
           git add -f runs/obb/tenis_mesa_obb_run/weights/best.pt
           git config user.name "GitHub Action"

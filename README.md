@@ -1,3 +1,12 @@
+---
+title: Table Tennis CV
+emoji: 🏓
+colorFrom: blue
+colorTo: red
+sdk: docker
+pinned: false
+---
+
 <div align="center">
   <h1>Table Tennis CV — Visión Computacional</h1>
   <p><em>Detección de objetos personalizados, segmentación de instancias y estimación de pose en tiempo real utilizando YOLO.</em></p>

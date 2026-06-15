@@ -24,4 +24,4 @@ RUN mkdir -p videos
 EXPOSE 7860
 
 # Iniciar la aplicación usando FastAPI en el puerto 7860
-CMD ["uvicorn", "backend:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["uvicorn", "src.api.backend:app", "--host", "0.0.0.0", "--port", "7860"]
