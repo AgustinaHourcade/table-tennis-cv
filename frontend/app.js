@@ -51,6 +51,8 @@ let forceRedraw = true;
 let isPlaying = false;
 let activeDemo = null;
 let hasVideoLoaded = false;
+let maxPlaybackTime = Infinity; // Limit playback to JSON data duration
+let lastMediaTime = 0; // Precise media time from requestVideoFrameCallback
 
 const layerState = {
   detection: true,
@@ -132,23 +134,51 @@ window.addEventListener('resize', resizeCanvas);
 /* ═══════════════════════════════════
    Render Loop
    ═══════════════════════════════════ */
+
+// Use requestVideoFrameCallback for frame-accurate sync
+function startVideoFrameSync() {
+  if ('requestVideoFrameCallback' in HTMLVideoElement.prototype) {
+    function onFrame(now, metadata) {
+      lastMediaTime = metadata.mediaTime;
+      forceRedraw = true;
+      video.requestVideoFrameCallback(onFrame);
+    }
+    video.requestVideoFrameCallback(onFrame);
+  }
+}
+
 function renderLoop() {
   if (!video.src || (video.paused && !forceRedraw)) {
     requestAnimationFrame(renderLoop);
     return;
   }
 
-  // Calculate current frame
-  const fps = (videoData && videoData.video_info) ? videoData.video_info.fps : 30;
-  const currentFrame = Math.floor(video.currentTime * fps);
+  // Use precise media time if available, fallback to currentTime
+  const mediaTime = lastMediaTime > 0 ? lastMediaTime : video.currentTime;
+
+  // Enforce playback limit: pause when reaching max time
+  if (video.currentTime >= maxPlaybackTime) {
+    video.pause();
+    video.currentTime = maxPlaybackTime - 0.01;
+    isPlaying = false;
+    updatePlayIcon();
+    forceRedraw = true;
+  }
+
+  // Calculate current frame index from precise media time
+  let currentFrame = 0;
+  if (videoData && videoData.frames && videoData.frames.length > 0) {
+    const fps = videoData.video_info.fps;
+    currentFrame = Math.floor(mediaTime * fps);
+    currentFrame = Math.max(0, Math.min(currentFrame, videoData.frames.length - 1));
+  }
 
   // Clear and draw video frame
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
   if (videoData && videoData.frames) {
-    const frameIdx = Math.min(currentFrame, videoData.frames.length - 1);
-    const frameData = videoData.frames[Math.max(0, frameIdx)];
+    const frameData = videoData.frames[currentFrame];
 
     if (frameData) {
       const scaleX = canvas.width / videoData.video_info.width;
@@ -330,12 +360,17 @@ async function loadVideoData(videoKey) {
     const res = await fetch(jsonPath);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     videoData = await res.json();
+    // Set max playback time to match JSON data duration (typically 20s)
+    if (videoData && videoData.video_info) {
+      maxPlaybackTime = videoData.video_info.total_frames / videoData.video_info.fps;
+    }
     updateMetricsPanel(videoData);
     buildTimeline(videoData);
     resizeCanvas();
   } catch (err) {
     console.warn('No se pudo cargar el JSON de datos:', err);
     videoData = null;
+    maxPlaybackTime = Infinity;
     clearMetricsPanel();
     clearTimeline();
   }
@@ -366,6 +401,7 @@ function selectDemo(demoKey) {
 
   // Load video
   const demo = DEMOS.find(d => d.key === demoKey);
+  lastMediaTime = 0; // Reset precise time tracker
   video.src = API_BASE_URL + '/videos/original/' + demo.file + '?v=' + new Date().getTime();
   video.load();
 
@@ -374,6 +410,7 @@ function selectDemo(demoKey) {
     onVideoLoaded();
     resizeCanvas();
     forceRedraw = true;
+    startVideoFrameSync(); // Start frame-accurate sync
     
     // Explicitly call play to force Chrome to buffer the hidden video
     video.play().then(() => {
@@ -610,8 +647,8 @@ function updatePlayIcon() {
 
 function updateTimeDisplay() {
   if (!hasVideoLoaded) return;
-  const cur = video.currentTime || 0;
-  const dur = video.duration || 0;
+  const cur = Math.min(video.currentTime, maxPlaybackTime) || 0;
+  const dur = Math.min(video.duration, maxPlaybackTime) || 0;
   ctrlTime.textContent = formatTime(cur) + ' / ' + formatTime(dur);
 
   if (dur > 0) {
@@ -644,13 +681,14 @@ btnPlay.addEventListener('click', () => {
 btnPrev.addEventListener('click', () => {
   if (!hasVideoLoaded) return;
   video.currentTime = Math.max(0, video.currentTime - 5);
+  if (video.currentTime >= maxPlaybackTime) video.currentTime = maxPlaybackTime - 0.01;
   forceRedraw = true;
 });
 
 // #5: Adelantar 5 segundos
 btnNext.addEventListener('click', () => {
   if (!hasVideoLoaded) return;
-  const dur = video.duration || 0;
+  const dur = Math.min(video.duration, maxPlaybackTime) || 0;
   video.currentTime = Math.min(dur, video.currentTime + 5);
   forceRedraw = true;
 });
@@ -659,7 +697,8 @@ ctrlProgress.addEventListener('click', (e) => {
   if (!hasVideoLoaded || !video.duration) return;
   const rect = ctrlProgress.getBoundingClientRect();
   const pct = (e.clientX - rect.left) / rect.width;
-  video.currentTime = pct * video.duration;
+  const dur = Math.min(video.duration, maxPlaybackTime) || 0;
+  video.currentTime = pct * dur;
   forceRedraw = true;
 });
 
@@ -937,10 +976,14 @@ async function startLoadingSequence(file) {
 
   // Progreso simulado mientras el backend procesa de forma síncrona
   let fakeProgress = 0;
-  progressText.textContent = "Aplicando inferencia YOLO...";
+  let dotCount = 0;
+  progressText.textContent = "Aplicando inferencia YOLO";
   const fakeInterval = setInterval(() => {
     fakeProgress += (90 - fakeProgress) * 0.1; 
     progressBar.style.width = fakeProgress + "%";
+    
+    dotCount = (dotCount + 1) % 4;
+    progressText.textContent = "Aplicando inferencia YOLO" + ".".repeat(dotCount);
   }, 500);
 
   let uploadRes;
