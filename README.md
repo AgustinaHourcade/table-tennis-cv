@@ -11,8 +11,7 @@ pinned: false
   <h1>Table Tennis CV — Visión Computacional</h1>
   <p><em>Detección de objetos personalizados, segmentación de instancias y estimación de pose en tiempo real utilizando YOLO.</em></p>
 
-  <!-- TODO: Reemplazar el src con la ruta de tu imagen cuando la adjuntes -->
-  <img src="https://via.placeholder.com/1000x500?text=Dashboard+Preview+-+Inserta+tu+imagen+aqui" alt="Dashboard Preview" width="100%">
+  <img src="tt-dashboard.png" alt="Dashboard Preview" width="100%">
 
   <br><br>
 
@@ -133,8 +132,8 @@ python src/main.py --input path/to/video.mp4 --output output/video_procesado.mp4
 
 - **Arquitectura Base**: Ultralytics YOLO26
 - **Métricas de Performance del Modelo**:
-  - **mAP50**: `[Por actualizar]`
-  - **mAP50-95**: `[Por actualizar]`
-  - **Precision (P)**: `[Por actualizar]`
-  - **Recall (R)**: `[Por actualizar]`
+  - **mAP50**: 0.7150
+  - **mAP50-95**: 0.4768
+  - **Precision (P)**: 0.8258
+  - **Recall (R)**: 0.6379
 
