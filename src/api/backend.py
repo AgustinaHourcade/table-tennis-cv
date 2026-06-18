@@ -43,12 +43,12 @@ def load_models():
     
     # Load detection model (look for best.pt)
     best_weights = glob.glob('**/weights/best.pt', recursive=True)
-    det_path = best_weights[0] if best_weights else 'models/weights/yolo26n-obb.pt'
+    det_path = best_weights[0] if best_weights else 'notebooks/yolo26n-obb.pt'
     print(f"Usando modelo de detección: {det_path}")
     
     model_detection = YOLO(det_path)
-    model_segmentation = YOLO('models/weights/yolo26n-seg.pt')
-    model_pose = YOLO('models/weights/yolo26n-pose.pt')
+    model_segmentation = YOLO('notebooks/yolo26n-seg.pt')
+    model_pose = YOLO('notebooks/yolo26n-pose.pt')
     print("Modelos cargados.")
 
 
