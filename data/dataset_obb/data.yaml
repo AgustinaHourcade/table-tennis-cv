@@ -1,8 +1,13 @@
-names:
-  0: TT Net
-  1: TT Racket
-  2: TT Table
-path: c:\Users\Agustina\Documents\UP\Redes-neuronales\TPI-Rede-Neuronales\data\dataset_obb
-test: test/images
-train: train/images
-val: valid/images
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['TT Net', 'TT Racket', 'TT Table']
+
+roboflow:
+  workspace: agustina-hourcade
+  project: table-tennis-tgntu
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/agustina-hourcade/table-tennis-tgntu/dataset/1

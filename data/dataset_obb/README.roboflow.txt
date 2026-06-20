@@ -1,8 +1,8 @@
 
-Projecto integrador YOLO: TT - v5 2026-06-10 9:28pm
+Table-tennis - v1 2026-06-20 4:18pm
 ==============================
 
-This dataset was exported via roboflow.com on June 11, 2026 at 12:28 AM GMT
+This dataset was exported via roboflow.com on June 20, 2026 at 7:19 PM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects
@@ -17,8 +17,8 @@ visit https://github.com/roboflow/notebooks
 
 To find over 100k other datasets and pre-trained models, visit https://universe.roboflow.com
 
-The dataset includes 273 images.
-Projecto-integrador-YOLO-TT are annotated in YOLOv8 Oriented Object Detection format.
+The dataset includes 655 images.
+Table-tennis are annotated in YOLO26 format.
 
 The following pre-processing was applied to each image:
 * Auto-orientation of pixel data (with EXIF-orientation stripping)
@@ -26,9 +26,11 @@ The following pre-processing was applied to each image:
 
 The following augmentation was applied to create 3 versions of each source image:
 * 50% probability of horizontal flip
-* Equal probability of one of the following 90-degree rotations: none, clockwise, counter-clockwise, upside-down
 * Random rotation of between -15 and +15 degrees
+* Random shear of between -10° to +10° horizontally and -10° to +10° vertically
 * Random brigthness adjustment of between -15 and +15 percent
-* Random Gaussian blur of between 0 and 0.5 pixels
+* Random exposure adjustment of between -10 and +10 percent
+* Random Gaussian blur of between 0 and 2.5 pixels
+* Salt and pepper noise was applied to 0.1 percent of pixels
 
 
