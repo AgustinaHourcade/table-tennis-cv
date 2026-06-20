@@ -8,6 +8,6 @@ names: ['TT Net', 'TT Racket', 'TT Table']
 roboflow:
   workspace: agustina-hourcade
   project: table-tennis-tgntu
-  version: 1
+  version: 2
   license: CC BY 4.0
-  url: https://universe.roboflow.com/agustina-hourcade/table-tennis-tgntu/dataset/1
+  url: https://universe.roboflow.com/agustina-hourcade/table-tennis-tgntu/dataset/2
