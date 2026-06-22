@@ -1000,7 +1000,6 @@ function showDropzoneError(msg) {
 /* ═══════════════════════════════════
    Loading Sequence (Upload)
    ═══════════════════════════════════ */
-const LOADING_STEPS = []; // Retained to avoid breaking other scripts if any
 
 async function startLoadingSequence(file) {
   loadingOv.classList.add('active');
@@ -1087,25 +1086,7 @@ async function startLoadingSequence(file) {
   }, { once: true });
 }
 
-function typewrite(el, text, charDelay) {
-  return new Promise(resolve => {
-    let i = 0;
-    function tick() {
-      if (i < text.length) {
-        el.textContent += text.charAt(i);
-        i++;
-        setTimeout(tick, charDelay);
-      } else {
-        resolve();
-      }
-    }
-    tick();
-  });
-}
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 /* ═══════════════════════════════════
    Initialization

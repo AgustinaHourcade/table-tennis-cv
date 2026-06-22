@@ -1,18 +1,23 @@
 import os
 import time
-# import json
 import uuid
 import shutil
-# from typing import Dict, Any
+import asyncio
+import sys
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
-# from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 import cv2
 from ultralytics import YOLO
 import glob
+
+base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if base_dir not in sys.path:
+    sys.path.append(base_dir)
+
+from src.config import CLASS_CONF_THRESHOLDS, CONF_SEG, CONF_POSE, MODEL_IMGSZ, MODEL_SEG_IMGSZ
 
 app = FastAPI()
 
@@ -25,11 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def add_cors_header(request, call_next):
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    return response
+# Middleware manual CORS eliminado
 
 # Global model variables
 model_detection = None
@@ -44,7 +45,6 @@ def load_models():
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
     # Load detection model using absolute path
-    import glob
     best_weights = glob.glob(os.path.join(base_dir, 'notebooks', 'runs', '**', 'weights', 'best.onnx'), recursive=True)
     if best_weights:
         det_path = best_weights[0]
@@ -57,15 +57,19 @@ def load_models():
     model_detection = YOLO(det_path, task='obb')
     model_segmentation = YOLO(os.path.join(base_dir, 'notebooks', 'yolo26n-seg.onnx'), task='segment')
     model_pose = YOLO(os.path.join(base_dir, 'notebooks', 'yolo26n-pose.onnx'), task='pose')
-    print("Modelos cargados.")
-
+    print("Modelos cargados. Iniciando warm-up...")
+    dummy_frame = np.zeros((MODEL_IMGSZ, MODEL_IMGSZ, 3), dtype=np.uint8)
+    model_detection.predict(dummy_frame, imgsz=MODEL_IMGSZ, verbose=False)
+    model_segmentation.predict(dummy_frame, imgsz=MODEL_SEG_IMGSZ, verbose=False)
+    model_pose.predict(dummy_frame, imgsz=MODEL_IMGSZ, verbose=False)
+    print("Warm-up completado.")
 
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok", "message": "Redes neuronales listas"}
 
 @app.post("/api/upload_video")
-def process_video(file: UploadFile = File(...)):
+async def process_video(file: UploadFile = File(...)):
     if not file.content_type.startswith("video/"):
         raise HTTPException(status_code=400, detail="El archivo debe ser un video")
         
@@ -80,6 +84,11 @@ def process_video(file: UploadFile = File(...)):
         
     print(f"Video guardado en {video_path}, comenzando inferencia...")
     
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, process_video_sync, video_path, video_key)
+    return result
+
+def process_video_sync(video_path: str, video_key: str):
     # Process video
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -133,6 +142,10 @@ def process_video(file: UploadFile = File(...)):
     conf_count = 0
     inference_time_sum = 0
     frame_idx = 0
+    processed_count = 0
+    
+    SEG_SKIP = 3  # Segmentación cada 3 frames procesados
+    last_seg_result = None
     
     while cap.isOpened() and frame_idx < limit_frames:
         # Capture timestamp BEFORE read — POS_MSEC gives the position of the
@@ -151,17 +164,22 @@ def process_video(file: UploadFile = File(...)):
         frame_data = {"timestamp_ms": timestamp_ms, "detections": [], "poses": [], "segmentations": []}
         
         # Pose
-        res_pose = model_pose.predict(frame, conf=0.25, iou=0.45, imgsz=640, verbose=False)[0]
+        res_pose = model_pose.predict(frame, conf=CONF_POSE, iou=0.45, imgsz=MODEL_IMGSZ, verbose=False)[0]
         if res_pose.keypoints is not None and len(res_pose.keypoints) > 0:
             xy = res_pose.keypoints.xy.cpu().numpy()
-            conf = res_pose.keypoints.conf.cpu().numpy() if res_pose.keypoints.conf is not None else np.zeros_like(xy[:, :, 0])
+            conf_vals = res_pose.keypoints.conf.cpu().numpy() if res_pose.keypoints.conf is not None else np.zeros_like(xy[:, :, 0])
             for i in range(len(xy)):
-                keypoints_list = [{"x": float(kp[0]), "y": float(kp[1]), "confidence": float(c)} for kp, c in zip(xy[i], conf[i])]
+                keypoints_list = [{"x": float(kp[0]), "y": float(kp[1]), "confidence": float(c)} for kp, c in zip(xy[i], conf_vals[i])]
                 frame_data["poses"].append({"keypoints": keypoints_list})
                 
-        # Segmentation
+        # Segmentation (con skip de frames)
         classes_seg = [i for i in range(80) if i != 0]
-        res_seg = model_segmentation.predict(frame, conf=0.30, iou=0.45, imgsz=640, classes=classes_seg, verbose=False)[0]
+        if processed_count % SEG_SKIP == 0 or last_seg_result is None:
+            res_seg = model_segmentation.predict(frame, conf=CONF_SEG, iou=0.45, imgsz=MODEL_SEG_IMGSZ, classes=classes_seg, verbose=False)[0]
+            last_seg_result = res_seg
+        else:
+            res_seg = last_seg_result
+            
         if res_seg.masks is not None and res_seg.boxes is not None:
             for i, mask in enumerate(res_seg.masks.xy):
                 if len(mask) < 3: continue
@@ -174,14 +192,14 @@ def process_video(file: UploadFile = File(...)):
                 })
                 
         # Detection
-        res_det = model_detection.predict(frame, conf=0.19, iou=0.25, imgsz=640, verbose=False)[0]
+        res_det = model_detection.predict(frame, conf=0.12, iou=0.25, imgsz=MODEL_IMGSZ, verbose=False)[0]
         detections = res_det.obb if (hasattr(res_det, 'obb') and res_det.obb is not None and len(res_det.obb) > 0) else res_det.boxes
         if detections is not None and len(detections) > 0:
             for i in range(len(detections)):
                 cls_id = int(detections.cls[i].item())
                 confidence = float(detections.conf[i].item())
                 cls_name = res_det.names[cls_id].upper().strip()
-                thresh = {'TT TABLE': 0.80, 'TT NET': 0.50, 'TT RACKET': 0.35}.get(cls_name, 0.25)
+                thresh = CLASS_CONF_THRESHOLDS.get(cls_name, 0.25)
                 
                 if confidence >= thresh:
                     if hasattr(detections, 'xyxyxyxy') and detections.xyxyxyxy is not None:
@@ -204,18 +222,19 @@ def process_video(file: UploadFile = File(...)):
         t1 = time.time()
         inference_time_sum += (t1 - t0) * 1000
         frame_idx += 1
+        processed_count += 1
         
-        # Log progress every 10 frames or on the first frame
-        if frame_idx == 1 or frame_idx % 10 == 0 or frame_idx == limit_frames:
-            print(f"Procesando frame {frame_idx}/{limit_frames}...")
+        # Log progress
+        if processed_count == 1 or processed_count % 10 == 0 or frame_idx == limit_frames:
+            print(f"Procesando frame {frame_idx}/{limit_frames} (Procesados: {processed_count})...")
             
     cap.release()
     
     json_data["video_info"]["total_frames"] = frame_idx
     if conf_count > 0:
         json_data["video_info"]["custom_classes_conf_avg"] = conf_sum / conf_count
-    if frame_idx > 0:
-        json_data["video_info"]["inference_time_ms_avg"] = inference_time_sum / frame_idx
+    if processed_count > 0:
+        json_data["video_info"]["inference_time_ms_avg"] = inference_time_sum / processed_count
         
     print("Inferencia completada.")
     
