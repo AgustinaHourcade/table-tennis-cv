@@ -41,14 +41,14 @@ def load_models():
     global model_detection, model_segmentation, model_pose
     print("Cargando modelos YOLO...")
     
-    # Load detection model (look for best.pt)
-    best_weights = glob.glob('**/weights/best.pt', recursive=True)
-    det_path = best_weights[0] if best_weights else 'notebooks/yolo26n-obb.pt'
+    # Load detection model (look for best.onnx)
+    best_weights = glob.glob('**/weights/best.onnx', recursive=True)
+    det_path = best_weights[0] if best_weights else 'notebooks/yolo26n-obb.onnx'
     print(f"Usando modelo de detección: {det_path}")
     
-    model_detection = YOLO(det_path)
-    model_segmentation = YOLO('notebooks/yolo26n-seg.pt')
-    model_pose = YOLO('notebooks/yolo26n-pose.pt')
+    model_detection = YOLO(det_path, task='obb')
+    model_segmentation = YOLO('notebooks/yolo26n-seg.onnx', task='segment')
+    model_pose = YOLO('notebooks/yolo26n-pose.onnx', task='pose')
     print("Modelos cargados.")
 
 
@@ -106,8 +106,8 @@ def process_video(file: UploadFile = File(...)):
         print(f"Dimensiones: {width}x{height} (sin rotacion)")
 
     
-    # Limit processing to 15 seconds to keep it fast for the demo
-    limit_frames = min(int(15 * fps), total_frames)
+    # Remove the 15-second limit now that frame skipping makes it fast enough
+    limit_frames = total_frames
     
     json_data = {
         "video_info": {
@@ -133,6 +133,11 @@ def process_video(file: UploadFile = File(...)):
         ret, frame = cap.read()
         if not ret:
             break
+            
+        # Frame Skipping: Procesar 1 de cada 3 frames (efectivamente ~10 FPS)
+        if frame_idx % 3 != 0:
+            frame_idx += 1
+            continue
             
         t0 = time.time()
         frame_data = {"timestamp_ms": timestamp_ms, "detections": [], "poses": [], "segmentations": []}
