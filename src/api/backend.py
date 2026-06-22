@@ -8,6 +8,7 @@ import sys
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 import numpy as np
 import cv2
 from ultralytics import YOLO
@@ -19,7 +20,15 @@ if base_dir not in sys.path:
 
 from src.config import CLASS_CONF_THRESHOLDS, CONF_SEG, CONF_POSE, MODEL_IMGSZ, MODEL_SEG_IMGSZ
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Iniciando aplicación. Cargando modelos...")
+    load_models()
+    yield
+    print("Apagando aplicación. Liberando recursos...")
+    # Limpieza de recursos si es necesario
+
+app = FastAPI(lifespan=lifespan)
 
 # Add CORS middleware
 app.add_middleware(
@@ -37,7 +46,6 @@ model_detection = None
 model_segmentation = None
 model_pose = None
 
-@app.on_event("startup")
 def load_models():
     global model_detection, model_segmentation, model_pose
     print("Cargando modelos YOLO...")
@@ -45,18 +53,18 @@ def load_models():
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     
     # Load detection model using absolute path
-    best_weights = glob.glob(os.path.join(base_dir, 'notebooks', 'runs', '**', 'weights', 'best.onnx'), recursive=True)
+    best_weights = glob.glob(os.path.join(base_dir, 'models', 'weights', 'best.onnx'))
     if best_weights:
         det_path = best_weights[0]
     else:
         # Fallback explícito si glob falla
-        det_path = os.path.join(base_dir, 'runs', 'obb', 'tenis_mesa_obb_run', 'weights', 'best.onnx')
+        det_path = os.path.join(base_dir, 'models', 'weights', 'yolo26m-obb.onnx')
     
     print(f"Usando modelo de detección: {det_path}")
     
     model_detection = YOLO(det_path, task='obb')
-    model_segmentation = YOLO(os.path.join(base_dir, 'notebooks', 'yolo26n-seg.onnx'), task='segment')
-    model_pose = YOLO(os.path.join(base_dir, 'notebooks', 'yolo26n-pose.onnx'), task='pose')
+    model_segmentation = YOLO(os.path.join(base_dir, 'models', 'weights', 'yolo26n-seg.onnx'), task='segment')
+    model_pose = YOLO(os.path.join(base_dir, 'models', 'weights', 'yolo26n-pose.onnx'), task='pose')
     print("Modelos cargados. Iniciando warm-up...")
     dummy_frame = np.zeros((MODEL_IMGSZ, MODEL_IMGSZ, 3), dtype=np.uint8)
     model_detection.predict(dummy_frame, imgsz=MODEL_IMGSZ, verbose=False)

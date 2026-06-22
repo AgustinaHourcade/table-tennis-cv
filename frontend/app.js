@@ -29,6 +29,7 @@ const ctrlProgress  = document.getElementById('ctrl-progress');
 const progressFill  = document.getElementById('ctrl-progress-fill');
 const btnMute       = document.getElementById('btn-mute');
 const ctrlVolume    = document.getElementById('ctrl-volume');
+const btnFullscreen = document.getElementById('btn-fullscreen');
 const exportBtn     = document.getElementById('export-btn');
 const exportVidBtn  = document.getElementById('export-vid-btn');
 
@@ -96,6 +97,7 @@ function setControlsEnabled(enabled) {
   btnNext.disabled = !enabled;
   btnMute.disabled = !enabled;
   ctrlVolume.disabled = !enabled;
+  btnFullscreen.disabled = !enabled;
 
   if (enabled) {
     ctrlTime.classList.remove('disabled');
@@ -755,6 +757,28 @@ ctrlVolume.addEventListener('input', () => {
   video.muted = video.volume === 0;
 });
 
+// Fullscreen
+btnFullscreen.addEventListener('click', () => {
+  const targetArea = document.querySelector('.player-area') || playerWrap;
+  if (!document.fullscreenElement) {
+    if (targetArea.requestFullscreen) {
+      targetArea.requestFullscreen();
+    } else if (targetArea.webkitRequestFullscreen) { /* Safari */
+      targetArea.webkitRequestFullscreen();
+    } else if (targetArea.msRequestFullscreen) { /* IE11 */
+      targetArea.msRequestFullscreen();
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) { /* Safari */
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) { /* IE11 */
+      document.msExitFullscreen();
+    }
+  }
+});
+
 video.addEventListener('ended', () => {
   isPlaying = false;
   updatePlayIcon();
@@ -896,7 +920,6 @@ function buildDemoCards() {
       '</div>' +
       '<div class="demo-card-info">' +
         '<div class="demo-card-name">' + demo.name + '</div>' +
-        '<div class="demo-card-meta" id="meta-' + demo.key + '"><span id="duration-' + demo.key + '">—</span> · ' + demo.file + '</div>' +
       '</div>';
 
     card.addEventListener('click', () => selectDemo(demo.key));
