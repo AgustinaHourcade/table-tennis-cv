@@ -132,7 +132,7 @@ function resizeCanvas() {
     const jw = videoData.video_info.width, jh = videoData.video_info.height;
     if (vw !== jw || vh !== jh) {
       console.warn('[TT-CV] Dimension mismatch: video=' + vw + 'x' + vh + ', JSON=' + jw + 'x' + jh +
-        '. Overlays will scale using video intrinsic dimensions.');
+        '. Video will be stretched to match JSON (OpenCV raw matrix) dimensions to ensure overlay alignment.');
     }
   }
   forceRedraw = true;
@@ -201,13 +201,12 @@ function renderLoop() {
     const frameData = videoData.frames[currentFrame];
 
     if (frameData) {
-      // Use the video element's intrinsic dimensions as the real reference for
-      // coordinate scaling. This is more robust than using videoData.video_info
-      // because the browser always reports the post-rotation, true pixel dimensions,
-      // while the JSON might contain raw codec dimensions (pre-rotation) if the
-      // backend didn't correct for rotation metadata.
-      const refWidth = video.videoWidth || videoData.video_info.width;
-      const refHeight = video.videoHeight || videoData.video_info.height;
+      // Use the exact dimensions from the JSON to ensure 1:1 mapping with OpenCV's matrix.
+      // Do NOT use video.videoWidth because the browser might apply Display Aspect Ratio (DAR)
+      // scaling, which would cause double-scaling since OpenCV (and thus YOLO) processes
+      // the raw pixel matrix ignoring DAR.
+      const refWidth = videoData.video_info.width;
+      const refHeight = videoData.video_info.height;
       const scaleX = canvas.width / refWidth;
       const scaleY = canvas.height / refHeight;
 
