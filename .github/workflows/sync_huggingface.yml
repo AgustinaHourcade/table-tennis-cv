@@ -34,10 +34,10 @@ jobs:
           echo "*.pdf" >> .gitignore
           pip install huggingface_hub[hf_xet]
           git lfs install
-          git lfs track "*.mp4" "*.pt" "*.json"
+          git lfs track "*.mp4" "*.pt" "*.json" "*.onnx"
           cp deploy/Dockerfile Dockerfile
           git add .
-          git add -f runs/obb/tenis_mesa_obb_run/weights/best.pt
+          git add -f notebooks/runs/runs/tenis_mesa_obb_run/weights/best.onnx
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git commit -m "Deploy to Hugging Face"
