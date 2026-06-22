@@ -1,13 +1,15 @@
-train: ../train/images
-val: ../valid/images
-test: ../test/images
-
+names:
+- TT Net
+- TT Racket
+- TT Table
 nc: 3
-names: ['TT Net', 'TT Racket', 'TT Table']
-
+path: /teamspace/studios/this_studio/table-tennis-cv/data/dataset_obb
 roboflow:
-  workspace: agustina-hourcade
-  project: table-tennis-tgntu
-  version: 2
   license: CC BY 4.0
+  project: table-tennis-tgntu
   url: https://universe.roboflow.com/agustina-hourcade/table-tennis-tgntu/dataset/2
+  version: 2
+  workspace: agustina-hourcade
+test: test/images
+train: train/images
+val: valid/images
