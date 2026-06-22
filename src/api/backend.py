@@ -41,14 +41,22 @@ def load_models():
     global model_detection, model_segmentation, model_pose
     print("Cargando modelos YOLO...")
     
-    # Load detection model (look for best.onnx)
-    best_weights = glob.glob('**/weights/best.onnx', recursive=True)
-    det_path = best_weights[0] if best_weights else 'notebooks/yolo26n-obb.onnx'
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    
+    # Load detection model using absolute path
+    import glob
+    best_weights = glob.glob(os.path.join(base_dir, 'notebooks', 'runs', '**', 'weights', 'best.onnx'), recursive=True)
+    if best_weights:
+        det_path = best_weights[0]
+    else:
+        # Fallback explícito si glob falla
+        det_path = os.path.join(base_dir, 'runs', 'obb', 'tenis_mesa_obb_run', 'weights', 'best.onnx')
+    
     print(f"Usando modelo de detección: {det_path}")
     
     model_detection = YOLO(det_path, task='obb')
-    model_segmentation = YOLO('notebooks/yolo26n-seg.onnx', task='segment')
-    model_pose = YOLO('notebooks/yolo26n-pose.onnx', task='pose')
+    model_segmentation = YOLO(os.path.join(base_dir, 'notebooks', 'yolo26n-seg.onnx'), task='segment')
+    model_pose = YOLO(os.path.join(base_dir, 'notebooks', 'yolo26n-pose.onnx'), task='pose')
     print("Modelos cargados.")
 
 

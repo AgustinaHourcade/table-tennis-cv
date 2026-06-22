@@ -11,12 +11,12 @@ def export_models():
         os.path.join(base_dir, "notebooks", "yolo26n-pose.pt"),
     ]
     
-    # Encontrar el mejor modelo OBB en runs
-    obb_models = glob.glob(os.path.join(base_dir, "runs", "obb", "**", "weights", "best.pt"), recursive=True)
+    # Encontrar el mejor modelo OBB en notebooks/runs
+    obb_models = glob.glob(os.path.join(base_dir, "notebooks", "runs", "**", "weights", "best.pt"), recursive=True)
     if obb_models:
         models_to_export.append(obb_models[0])
     else:
-        print("Advertencia: No se encontró best.pt para OBB en runs/obb/")
+        print("Advertencia: No se encontró best.pt para OBB en notebooks/runs/obb/")
         # Fallback al notebook obb si existe
         fallback = os.path.join(base_dir, "notebooks", "yolo26m-obb.pt")
         if os.path.exists(fallback):
