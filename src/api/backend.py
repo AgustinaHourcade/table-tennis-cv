@@ -82,6 +82,30 @@ def process_video(file: UploadFile = File(...)):
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
+    # --- Detección robusta de dimensiones reales (respetando rotación de metadata) ---
+    # CAP_PROP_FRAME_WIDTH/HEIGHT devuelven las dimensiones del codec raw (sin rotar).
+    # En OpenCV 4.x, CAP_PROP_ORIENTATION_AUTO=1 por defecto: cap.read() auto-rota
+    # los frames, pero las propiedades WIDTH/HEIGHT siguen reportando las raw.
+    # Para videos de celular con rotación, esto causa mismatch entre las coordenadas
+    # de inferencia (calculadas sobre frames rotados) y las dimensiones del JSON.
+    # Solución: leer un frame de prueba para obtener las dimensiones reales.
+    codec_w, codec_h = width, height
+    orient_meta = 0
+    if hasattr(cv2, 'CAP_PROP_ORIENTATION_META'):
+        orient_meta = int(cap.get(cv2.CAP_PROP_ORIENTATION_META))
+    
+    ret_test, test_frame = cap.read()
+    if ret_test:
+        actual_h, actual_w = test_frame.shape[:2]
+        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Rebobinar al inicio
+        if actual_w != codec_w or actual_h != codec_h:
+            print(f"Rotacion detectada: codec={codec_w}x{codec_h}, "
+                  f"real={actual_w}x{actual_h}, orient_meta={orient_meta} grados")
+            width, height = actual_w, actual_h
+    else:
+        print(f"Dimensiones: {width}x{height} (sin rotacion)")
+
+    
     # Limit processing to 15 seconds to keep it fast for the demo
     limit_frames = min(int(15 * fps), total_frames)
     
@@ -103,12 +127,15 @@ def process_video(file: UploadFile = File(...)):
     frame_idx = 0
     
     while cap.isOpened() and frame_idx < limit_frames:
+        # Capture timestamp BEFORE read — POS_MSEC gives the position of the
+        # frame about to be decoded, which is what we need for VFR sync.
+        timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
         ret, frame = cap.read()
         if not ret:
             break
             
         t0 = time.time()
-        frame_data = {"detections": [], "poses": [], "segmentations": []}
+        frame_data = {"timestamp_ms": timestamp_ms, "detections": [], "poses": [], "segmentations": []}
         
         # Pose
         res_pose = model_pose.predict(frame, conf=0.25, iou=0.45, imgsz=640, verbose=False)[0]

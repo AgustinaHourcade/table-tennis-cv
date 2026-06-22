@@ -126,6 +126,15 @@ function resizeCanvas() {
     canvas.width = 1920;
     canvas.height = 1080;
   }
+  // Log para debugging de desfasaje de dimensiones
+  if (video.videoWidth && videoData) {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const jw = videoData.video_info.width, jh = videoData.video_info.height;
+    if (vw !== jw || vh !== jh) {
+      console.warn('[TT-CV] Dimension mismatch: video=' + vw + 'x' + vh + ', JSON=' + jw + 'x' + jh +
+        '. Overlays will scale using video intrinsic dimensions.');
+    }
+  }
   forceRedraw = true;
 }
 
@@ -165,11 +174,22 @@ function renderLoop() {
     forceRedraw = true;
   }
 
-  // Calculate current frame index from precise media time
+  // Calculate current frame index — VFR-safe strategy:
+  // 1. If frames have timestamp_ms (from updated backend), use binary search
+  //    on timestamps to find the closest frame. This correctly handles Variable
+  //    Frame Rate videos and survives seeking.
+  // 2. Fallback to mediaTime * fps for legacy JSON without timestamps.
   let currentFrame = 0;
   if (videoData && videoData.frames && videoData.frames.length > 0) {
-    const fps = videoData.video_info.fps;
-    currentFrame = Math.floor(mediaTime * fps);
+    const mediaTimeMs = mediaTime * 1000;
+    if (videoData.frames[0] && typeof videoData.frames[0].timestamp_ms === 'number') {
+      // VFR-safe: binary search for the frame with closest timestamp
+      currentFrame = findFrameByTimestamp(videoData.frames, mediaTimeMs);
+    } else {
+      // Fallback: time-based calculation (works for CFR, may drift for VFR)
+      const fps = videoData.video_info.fps;
+      currentFrame = Math.floor(mediaTime * fps);
+    }
     currentFrame = Math.max(0, Math.min(currentFrame, videoData.frames.length - 1));
   }
 
@@ -181,8 +201,15 @@ function renderLoop() {
     const frameData = videoData.frames[currentFrame];
 
     if (frameData) {
-      const scaleX = canvas.width / videoData.video_info.width;
-      const scaleY = canvas.height / videoData.video_info.height;
+      // Use the video element's intrinsic dimensions as the real reference for
+      // coordinate scaling. This is more robust than using videoData.video_info
+      // because the browser always reports the post-rotation, true pixel dimensions,
+      // while the JSON might contain raw codec dimensions (pre-rotation) if the
+      // backend didn't correct for rotation metadata.
+      const refWidth = video.videoWidth || videoData.video_info.width;
+      const refHeight = video.videoHeight || videoData.video_info.height;
+      const scaleX = canvas.width / refWidth;
+      const scaleY = canvas.height / refHeight;
 
       // Draw order: segmentation (back), detection (mid), pose (front)
       if (layerState.segmentation && frameData.segmentations) {
@@ -349,6 +376,22 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+// Binary search for closest frame by timestamp (VFR-safe).
+// Frames are sorted by timestamp_ms (ascending, as read sequentially from video).
+// Returns the index of the frame whose timestamp is <= targetMs (or the closest one).
+function findFrameByTimestamp(frames, targetMs) {
+  let lo = 0, hi = frames.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >>> 1; // ceil division to avoid infinite loop
+    if (frames[mid].timestamp_ms <= targetMs) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return lo;
 }
 
 /* ═══════════════════════════════════
@@ -1030,6 +1073,10 @@ async function startLoadingSequence(file) {
   video.addEventListener('loadedmetadata', function onReady() {
     video.removeEventListener('loadedmetadata', onReady);
     onVideoLoaded();
+    
+    // Reset time tracker for the new upload
+    lastMediaTime = 0;
+    startVideoFrameSync(); // Enable frame-accurate sync for uploads too
     
     video.play().then(() => {
       isPlaying = true;
