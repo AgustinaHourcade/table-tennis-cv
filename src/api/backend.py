@@ -13,12 +13,12 @@ import numpy as np
 import cv2
 from ultralytics import YOLO
 import glob
-from src.config import CLASS_CONF_THRESHOLDS, CONF_SEG, CONF_POSE, MODEL_IMGSZ, MODEL_SEG_IMGSZ
 
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if base_dir not in sys.path:
     sys.path.append(base_dir)
 
+from src.config import CLASS_CONF_THRESHOLDS, CONF_SEG, CONF_POSE, MODEL_IMGSZ, MODEL_SEG_IMGSZ
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

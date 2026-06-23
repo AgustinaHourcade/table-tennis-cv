@@ -11,4 +11,4 @@ CONF_POSE = 0.25
 
 # Tamaño de imagen para los modelos
 MODEL_IMGSZ = 640
-MODEL_SEG_IMGSZ = 640  # Se debe mantener en 640 ya que el modelo ONNX fue exportado de forma estática (dynamic=False)
+MODEL_SEG_IMGSZ = 480  # Se debe mantener en 480 ya que el modelo ONNX fue exportado de forma estática (dynamic=False)
