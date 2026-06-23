@@ -13,12 +13,12 @@ import numpy as np
 import cv2
 from ultralytics import YOLO
 import glob
+from src.config import CLASS_CONF_THRESHOLDS, CONF_SEG, CONF_POSE, MODEL_IMGSZ, MODEL_SEG_IMGSZ
 
 base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if base_dir not in sys.path:
     sys.path.append(base_dir)
 
-from src.config import CLASS_CONF_THRESHOLDS, CONF_SEG, CONF_POSE, MODEL_IMGSZ, MODEL_SEG_IMGSZ
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,8 +38,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Middleware manual CORS eliminado
 
 # Global model variables
 model_detection = None
@@ -107,13 +105,6 @@ def process_video_sync(video_path: str, video_key: str):
     fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-    # --- Detección robusta de dimensiones reales (respetando rotación de metadata) ---
-    # CAP_PROP_FRAME_WIDTH/HEIGHT devuelven las dimensiones del codec raw (sin rotar).
-    # En OpenCV 4.x, CAP_PROP_ORIENTATION_AUTO=1 por defecto: cap.read() auto-rota
-    # los frames, pero las propiedades WIDTH/HEIGHT siguen reportando las raw.
-    # Para videos de celular con rotación, esto causa mismatch entre las coordenadas
-    # de inferencia (calculadas sobre frames rotados) y las dimensiones del JSON.
-    # Solución: leer un frame de prueba para obtener las dimensiones reales.
     codec_w, codec_h = width, height
     orient_meta = 0
     if hasattr(cv2, 'CAP_PROP_ORIENTATION_META'):
@@ -130,8 +121,6 @@ def process_video_sync(video_path: str, video_key: str):
     else:
         print(f"Dimensiones: {width}x{height} (sin rotacion)")
 
-    
-    # Remove the 15-second limit now that frame skipping makes it fast enough
     limit_frames = total_frames
     
     json_data = {
@@ -156,14 +145,12 @@ def process_video_sync(video_path: str, video_key: str):
     last_seg_result = None
     
     while cap.isOpened() and frame_idx < limit_frames:
-        # Capture timestamp BEFORE read — POS_MSEC gives the position of the
-        # frame about to be decoded, which is what we need for VFR sync.
         timestamp_ms = cap.get(cv2.CAP_PROP_POS_MSEC)
         ret, frame = cap.read()
         if not ret:
             break
             
-        # Frame Skipping: Procesar 1 de cada 3 frames (efectivamente ~10 FPS)
+        # Frame Skipping: Procesar 1 de cada 3 frames 
         if frame_idx % 3 != 0:
             frame_idx += 1
             continue

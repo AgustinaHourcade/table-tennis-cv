@@ -31,11 +31,7 @@ def export_models():
             print(f"\n--- Exportando a ONNX: {model_path} ---")
             model = YOLO(model_path)
             
-            # Configuramos exportación específica por tipo de modelo
             export_imgsz = 480 if "seg" in model_path else 640
-            
-            # format='onnx' exporta el modelo, imgsz define el tamaño estático
-            # half=False para evitar problemas en CPUs de HF Spaces (poner en True solo si hay GPU)
             model.export(format="onnx", imgsz=export_imgsz, dynamic=False, half=False)
         else:
             print(f"Error: No se encontró el archivo {model_path}")

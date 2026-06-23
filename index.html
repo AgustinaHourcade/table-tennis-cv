@@ -1,10 +1,98 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="refresh" content="0; url=frontend/index.html" />
-    <title>Redirigiendo...</title>
-  </head>
-  <body>
-    <p>Redirigiendo a la aplicación... Si no eres redirigido, haz <a href="frontend/index.html">clic aquí</a>.</p>
-  </body>
+<html class="dark" lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Table Tennis - Visión Computacional</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Manrope:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline-variant": "#494454",
+                        "primary": "#d0bcff",
+                        "surface-container": "#171f33",
+                        "on-surface-variant": "#cbc3d7",
+                        "surface": "#0b1326",
+                        "on-surface": "#dae2fd",
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Manrope"],
+                        "display-lg": ["Space Grotesk"],
+                        "data-mono": ["JetBrains Mono"],
+                        "label-caps": ["JetBrains Mono"]
+                    },
+                    "animation": {
+                        "fade-in-up": "fadeInUp 1s ease-out forwards",
+                        "pulse-glow": "pulseGlow 2s infinite"
+                    },
+                    "keyframes": {
+                        "fadeInUp": {
+                            "0%": { opacity: "0", transform: "translateY(20px)" },
+                            "100%": { opacity: "1", transform: "translateY(0)" }
+                        },
+                        "pulseGlow": {
+                            "0%, 100%": { opacity: "0.5", filter: "blur(4px)" },
+                            "50%": { opacity: "1", filter: "blur(8px)" }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(208, 188, 255, 0.1);
+            border-bottom-color: #d0bcff;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logo-glow {
+            box-shadow: 0 0 20px rgba(208, 188, 255, 0.2);
+        }
+    </style>
+
+    <script>
+        // Redirige al dashboard principal después de una pequeña animación (2.5 segundos)
+        setTimeout(() => {
+            window.location.href = "frontend/index.html";
+        }, 2500);
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center m-0 p-0 overflow-hidden font-body-lg">
+    <div class="flex flex-col items-center justify-center opacity-0 animate-fade-in-up w-full max-w-md px-6 relative z-10 text-center">
+        
+        <div class="relative mb-8">
+            <div class="absolute inset-0 rounded-full bg-primary opacity-20 blur-xl animate-pulse-glow"></div>
+            <div class="w-24 h-24 mx-auto rounded-full bg-surface-container flex items-center justify-center border border-outline-variant logo-glow relative z-10">
+                <span class="material-symbols-outlined text-5xl text-primary" style="font-variation-settings: 'FILL' 1;">sports_tennis</span>
+            </div>
+        </div>
+        
+        <h1 class="font-display-lg text-4xl text-primary mb-2 tracking-tighter">Table Tennis</h1>
+        <p class="font-data-mono text-sm text-on-surface-variant mb-12 tracking-widest uppercase">Visión Computacional</p>
+        
+        <div class="flex flex-col items-center gap-6 mt-8">
+            <span class="loader"></span>
+            <p class="font-label-caps text-xs text-on-surface-variant uppercase tracking-widest">Inicializando sistemas de visión...</p>
+        </div>
+        
+    </div>
+</body>
 </html>

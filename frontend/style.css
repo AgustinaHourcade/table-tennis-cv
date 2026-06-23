@@ -1,4 +1,4 @@
-/* ── CSS Custom Properties ── */
+/*  CSS Custom Properties  */
     :root {
       --bg-primary:     #0D0D0D;
       --bg-secondary:   #161616;
@@ -23,7 +23,7 @@
       --transition:     0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* ── Reset & Base ── */
+    /*  Reset & Base  */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html {
@@ -41,13 +41,13 @@
       line-height: 1.5;
     }
 
-    /* ── Scrollbar ── */
+    /*  Scrollbar  */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg-primary); }
     ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-    /* ── Header ── */
+    /*  Header  */
     .header {
       display: flex;
       align-items: center;
@@ -135,13 +135,13 @@
       color: var(--text-secondary);
     }
 
-    /* ── Main Container ── */
+    /*  Main Container  */
     .main-container {
       margin: 0 auto;
       padding: 24px 32px 48px;
     }
 
-    /* ── Section Labels ── */
+    /*  Section Labels  */
     .section-label {
       font-family: 'DM Mono', monospace;
       font-size: 10px;
@@ -151,7 +151,7 @@
       margin-bottom: 12px;
     }
 
-    /* ── Demo Cards (compact for sidebar) ── */
+    /*  Demo Cards (compact for sidebar)  */
     .demo-cards-panel {
       display: flex;
       flex-direction: column;
@@ -291,7 +291,7 @@
       line-height: 1.3;
     }
 
-    /* ── Workspace: 3-column layout ── */
+    /*  Workspace: 3-column layout  */
     .workspace {
       display: grid;
       grid-template-columns: 180px 1fr 260px;
@@ -299,7 +299,7 @@
       margin-bottom: 28px;
     }
 
-    /* ── Player Area ── */
+    /*  Player Area  */
     .player-area {
       display: flex;
       flex-direction: column;
@@ -376,7 +376,7 @@
       display: block;
     }
 
-    /* ── Idle State (replaces empty state) ── */
+    /*  Idle State (replaces empty state)  */
     .player-idle-state {
       position: absolute;
       inset: 0;
@@ -423,7 +423,7 @@
       opacity: 1;
     }
 
-    /* ── Loading State ── */
+    /*  Loading State  */
     .loading-overlay {
       position: absolute;
       inset: 0;
@@ -490,7 +490,7 @@
       color: #444;
     }
 
-    /* ── Player Controls ── */
+    /*  Player Controls  */
     .player-controls {
       display: flex;
       align-items: center;
@@ -613,7 +613,7 @@
       cursor: pointer;
     }
 
-    /* ── Timeline ── */
+    /*  Timeline  */
     .timeline-section {
       padding: 10px 16px;
       background: var(--bg-card);
@@ -684,7 +684,7 @@
       box-shadow: 0 0 6px rgba(167,139,250,0.5);
     }
 
-    /* ── Metrics Panel ── */
+    /*  Metrics Panel  */
     .metrics-panel {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -706,7 +706,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    /* ── Toggles ── */
+    /*  Toggles  */
     .toggles-group {
       display: flex;
       flex-direction: column;
@@ -785,7 +785,7 @@
       background: #fff;
     }
 
-    /* ── Confidence Slider ── */
+    /*  Confidence Slider  */
     .confidence-section {
       display: flex;
       flex-direction: column;
@@ -848,7 +848,7 @@
       margin-top: -2px;
     }
 
-    /* ── Metrics Grid ── */
+    /*  Metrics Grid  */
     .metrics-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -951,7 +951,7 @@
       margin-bottom: 6px;
     }
 
-    /* ── Bar Chart ── */
+    /*  Bar Chart  */
     .bar-chart-section {
       display: flex;
       flex-direction: column;
@@ -999,7 +999,7 @@
       text-align: right;
     }
 
-    /* ── Summary ── */
+    /*  Summary  */
     .summary-box {
       padding: 12px;
       background: var(--bg-secondary);
@@ -1015,7 +1015,7 @@
       color: var(--accent-global);
     }
 
-    /* ── Export Button ── */
+    /*  Export Button  */
     .export-btn {
       width: 100%;
       padding: 10px;
@@ -1071,7 +1071,7 @@
       display: block;
     }
 
-    /* ── Dropzone ── */
+    /*  Dropzone  */
     .dropzone-section {
       margin-top: 8px;
     }
@@ -1138,7 +1138,7 @@
       cursor: pointer;
     }
 
-    /* ── Responsive ── */
+    /*  Responsive  */
     @media (max-width: 768px) {
       .header {
         padding: 12px 16px;
@@ -1182,7 +1182,7 @@
       }
     }
 
-    /* ── Fade-in Animation ── */
+    /*  Fade-in Animation  */
     @keyframes fadeInUp {
       from {
         opacity: 0;
@@ -1203,4 +1203,4 @@
     .animate-in:nth-child(3) { animation-delay: 0.15s; }
     .animate-in:nth-child(4) { animation-delay: 0.2s; }
 
-
+

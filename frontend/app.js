@@ -1,17 +1,11 @@
-// Detectamos si estamos en producción (GitHub Pages) para apuntar al backend de Hugging Face
 let API_BASE_URL = '';
 if (window.location.hostname.includes('github.io')) {
-  // URL de tu servidor en Hugging Face
   API_BASE_URL = 'https://agustinah-table-tennis-cv.hf.space';
 } else if (window.location.port !== '8555' && window.location.hostname === 'localhost' || window.location.protocol === 'file:') {
-  // Si estás usando Live Server (puerto 8000) o abriendo el archivo localmente
   API_BASE_URL = 'http://localhost:8555';
 }
-/* ═══════════════════════════════════════════════════════════════
-   TT Vision Dashboard — Main Application Script
-   ═══════════════════════════════════════════════════════════════ */
 
-// ── DOM Refs ──
+// DOM Refs
 const video       = document.getElementById('video-src');
 const canvas      = document.getElementById('overlay-canvas');
 const ctx         = canvas.getContext('2d');
@@ -46,24 +40,24 @@ const dropzoneError = document.getElementById('dropzone-error');
 // Idle upload link
 const idleUploadLink = document.getElementById('idle-upload-link');
 
-// ── State ──
+// State
 let videoData = null;
 let forceRedraw = true;
 let isPlaying = false;
 let activeDemo = null;
 let hasVideoLoaded = false;
-let maxPlaybackTime = Infinity; // Limit playback to JSON data duration
-let lastMediaTime = 0; // Precise media time from requestVideoFrameCallback
+let maxPlaybackTime = Infinity; 
+let lastMediaTime = 0; 
 
 const layerState = {
   detection: true,
   pose: true,
-  segmentation: false   // #6: Segmentación OFF por defecto
+  segmentation: false   // Segmentación OFF por defecto
 };
 
 let confidenceThreshold = 0.45;
 
-// ── COCO Skeleton Connections ──
+// COCO Skeleton Connections
 const POSE_CONNECTIONS = [
   [0,1],[0,2],[1,3],[2,4],
   [5,6],[5,7],[7,9],[6,8],[8,10],
@@ -71,7 +65,7 @@ const POSE_CONNECTIONS = [
   [11,13],[13,15],[12,14],[14,16]
 ];
 
-// ── Colors ──
+// Colors 
 const COLOR_DET  = '#1D9E75';
 const COLOR_POSE = '#378ADD';
 const COLOR_SEG  = '#D85A30';
@@ -80,7 +74,7 @@ const COLOR_SEG_FILL = 'rgba(216, 90, 48, 0.25)';
 // Custom detection classes
 const CUSTOM_CLASSES = new Set(['TT Table', 'TT Net', 'TT Racket']);
 
-// ── Demo Config ── (#3: 4 demos)
+// Demo Config 
 const DEMOS = [
   { key: 'demo_01', name: 'Demo 01', file: 'demo_01.mp4' },
   { key: 'demo_02', name: 'Demo 02', file: 'demo_02.mp4' },
@@ -88,9 +82,7 @@ const DEMOS = [
   { key: 'demo_04', name: 'Demo 04', file: 'demo_04.mp4' }
 ];
 
-/* ═══════════════════════════════════
-   Enable / Disable Controls
-   ═══════════════════════════════════ */
+// Enable / Disable Controls
 function setControlsEnabled(enabled) {
   btnPlay.disabled = !enabled;
   btnPrev.disabled = !enabled;
@@ -142,9 +134,7 @@ function resizeCanvas() {
 
 window.addEventListener('resize', resizeCanvas);
 
-/* ═══════════════════════════════════
-   Render Loop
-   ═══════════════════════════════════ */
+// Render Loop
 
 // Use requestVideoFrameCallback for frame-accurate sync
 function startVideoFrameSync() {
@@ -164,10 +154,8 @@ function renderLoop() {
     return;
   }
 
-  // Use precise media time if available, fallback to currentTime
   const mediaTime = lastMediaTime > 0 ? lastMediaTime : video.currentTime;
 
-  // Enforce playback limit: pause when reaching max time
   if (video.currentTime >= maxPlaybackTime) {
     video.pause();
     video.currentTime = maxPlaybackTime - 0.01;
@@ -176,11 +164,6 @@ function renderLoop() {
     forceRedraw = true;
   }
 
-  // Calculate current frame index — VFR-safe strategy:
-  // 1. If frames have timestamp_ms (from updated backend), use binary search
-  //    on timestamps to find the closest frame. This correctly handles Variable
-  //    Frame Rate videos and survives seeking.
-  // 2. Fallback to mediaTime * fps for legacy JSON without timestamps.
   let currentFrame = 0;
   if (videoData && videoData.frames && videoData.frames.length > 0) {
     const mediaTimeMs = mediaTime * 1000;
@@ -203,10 +186,6 @@ function renderLoop() {
     const frameData = videoData.frames[currentFrame];
 
     if (frameData) {
-      // Use the exact dimensions from the JSON to ensure 1:1 mapping with OpenCV's matrix.
-      // Do NOT use video.videoWidth because the browser might apply Display Aspect Ratio (DAR)
-      // scaling, which would cause double-scaling since OpenCV (and thus YOLO) processes
-      // the raw pixel matrix ignoring DAR.
       const refWidth = videoData.video_info.width;
       const refHeight = videoData.video_info.height;
       const scaleX = canvas.width / refWidth;
@@ -232,9 +211,7 @@ function renderLoop() {
   requestAnimationFrame(renderLoop);
 }
 
-/* ═══════════════════════════════════
-   Drawing Functions
-   ═══════════════════════════════════ */
+// Drawing Functions
 function drawDetections(detections, scaleX, scaleY) {
   detections
     .filter(d => d.confidence >= confidenceThreshold)
@@ -380,8 +357,6 @@ function roundRect(ctx, x, y, w, h, r) {
 }
 
 // Binary search for closest frame by timestamp (VFR-safe).
-// Frames are sorted by timestamp_ms (ascending, as read sequentially from video).
-// Returns the index of the frame whose timestamp is <= targetMs (or the closest one).
 function findFrameByTimestamp(frames, targetMs) {
   let lo = 0, hi = frames.length - 1;
   while (lo < hi) {
@@ -395,9 +370,7 @@ function findFrameByTimestamp(frames, targetMs) {
   return lo;
 }
 
-/* ═══════════════════════════════════
-   Data Loading
-   ═══════════════════════════════════ */
+// Data Loading
 async function loadVideoData(videoKey) {
   const jsonPath = API_BASE_URL + '/videos/processed/processed_' + videoKey + '_data.json';
   try {
@@ -467,9 +440,7 @@ function selectDemo(demoKey) {
   loadVideoData(demoKey);
 }
 
-/* ═══════════════════════════════════
-   Metrics Panel Updates
-   ═══════════════════════════════════ */
+// Metrics Panel Updates
 function showSkeletonMetrics() {
   document.getElementById('metric-total-det').innerHTML  = '<div class="skeleton skeleton-value"></div>';
   document.getElementById('metric-persons').innerHTML    = '<div class="skeleton skeleton-value"></div>';
@@ -595,9 +566,7 @@ function buildBarChart(classCounts) {
   });
 }
 
-/* ═══════════════════════════════════
-   Timeline
-   ═══════════════════════════════════ */
+// Timeline
 const TIMELINE_BUCKETS = 100;
 
 function buildTimeline(data) {
@@ -678,9 +647,7 @@ function clearTimeline() {
   document.getElementById('timeline-container').innerHTML = '';
 }
 
-/* ═══════════════════════════════════
-   Playback Controls
-   ═══════════════════════════════════ */
+// Playback Controls
 function updatePlayIcon() {
   if (isPlaying) {
     playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
@@ -721,7 +688,7 @@ btnPlay.addEventListener('click', () => {
   updatePlayIcon();
 });
 
-// #5: Retroceder 5 segundos
+// Retroceder 5 segundos
 btnPrev.addEventListener('click', () => {
   if (!hasVideoLoaded) return;
   video.currentTime = Math.max(0, video.currentTime - 5);
@@ -729,7 +696,7 @@ btnPrev.addEventListener('click', () => {
   forceRedraw = true;
 });
 
-// #5: Adelantar 5 segundos
+// Adelantar 5 segundos
 btnNext.addEventListener('click', () => {
   if (!hasVideoLoaded) return;
   const dur = Math.min(video.duration, maxPlaybackTime) || 0;
@@ -785,7 +752,7 @@ video.addEventListener('ended', () => {
   forceRedraw = true;
 });
 
-// #13: Idle upload link scrolls to dropzone
+// Idle upload link scrolls to dropzone
 idleUploadLink.addEventListener('click', () => {
   const dropzoneSection = document.getElementById('dropzone-section');
   dropzoneSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -794,9 +761,7 @@ idleUploadLink.addEventListener('click', () => {
   setTimeout(() => dropzone.classList.remove('drag-over'), 1500);
 });
 
-/* ═══════════════════════════════════
-   Toggles & Confidence
-   ═══════════════════════════════════ */
+// Toggles & Confidence
 document.querySelectorAll('.toggle-switch input').forEach(input => {
   input.addEventListener('change', () => {
     const layer = input.dataset.layer;
@@ -812,9 +777,7 @@ confSlider.addEventListener('input', () => {
   forceRedraw = true;
 });
 
-/* ═══════════════════════════════════
-   Export Frame
-   ═══════════════════════════════════ */
+// Export Frame
 exportBtn.addEventListener('click', () => {
   if (!hasVideoLoaded) return;
 
@@ -892,9 +855,7 @@ exportVidBtn.addEventListener('click', async () => {
   }, {once: true});
 });
 
-/* ═══════════════════════════════════
-   Demo Cards Generation
-   ═══════════════════════════════════ */
+// Demo Cards Generation
 function buildDemoCards() {
   const grid = document.getElementById('demo-cards-grid');
   grid.innerHTML = '';
@@ -904,7 +865,6 @@ function buildDemoCards() {
     card.className = 'demo-card animate-in';
     card.dataset.key = demo.key;
 
-    // #2: No chips/tags — only title + metadata
     card.innerHTML =
       '<div class="demo-card-thumb">' +
         '<div class="thumb-placeholder" id="thumb-' + demo.key + '">' +
@@ -938,7 +898,7 @@ function loadThumbnail(demo) {
   thumbVideo.src = API_BASE_URL + '/videos/original/' + demo.file + '?v=' + new Date().getTime();
 
   thumbVideo.addEventListener('loadeddata', () => {
-    thumbVideo.currentTime = 0.5; // Seek to 0.5s for a good thumbnail
+    thumbVideo.currentTime = 0.5; 
   });
 
   thumbVideo.addEventListener('seeked', () => {
@@ -969,9 +929,7 @@ function loadThumbnail(demo) {
   });
 }
 
-/* ═══════════════════════════════════
-   Dropzone & File Upload
-   ═══════════════════════════════════ */
+// Dropzone & File Upload
 dropzone.addEventListener('dragover', (e) => {
   e.preventDefault();
   dropzone.classList.add('drag-over');
@@ -1003,9 +961,6 @@ function handleUpload(file) {
     return;
   }
 
-    // Se eliminó la validación de duración porque algunos videos reportan duraciones erróneas.
-
-    // Valid — start loading sequence
     activeDemo = null;
     document.querySelectorAll('.demo-card').forEach(c => c.classList.remove('active'));
     videoData = null;
@@ -1020,10 +975,7 @@ function showDropzoneError(msg) {
   dropzoneError.classList.add('visible');
 }
 
-/* ═══════════════════════════════════
-   Loading Sequence (Upload)
-   ═══════════════════════════════════ */
-
+// Loading Sequence (Upload)
 async function startLoadingSequence(file) {
   loadingOv.classList.add('active');
   idleState.style.display = 'none';
@@ -1038,7 +990,6 @@ async function startLoadingSequence(file) {
   const formData = new FormData();
   formData.append("file", file);
 
-  // Progreso simulado mientras el backend procesa de forma síncrona
   let fakeProgress = 0;
   let dotCount = 0;
   progressText.textContent = "Aplicando inferencia YOLO";
@@ -1111,13 +1062,11 @@ async function startLoadingSequence(file) {
 
 
 
-/* ═══════════════════════════════════
-   Initialization
-   ═══════════════════════════════════ */
+// Initialization
 function init() {
   buildDemoCards();
   resizeCanvas();
-  setControlsEnabled(false); // Start with controls disabled
+  setControlsEnabled(false);
   requestAnimationFrame(renderLoop);
 }
 
